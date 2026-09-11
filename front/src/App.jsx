@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DragDropProvider,
   DragOverlay,
@@ -10,6 +10,7 @@ import {
   cambiarEstadoPedido,
   crearPedido,
   obtenerPedidosIniciales,
+  obtenerPedidos,
 } from "./data";
 import coffeeIcon from "./assets/coffee.svg";
 
@@ -22,14 +23,62 @@ const columnas = [
 function App() {
   const [pedidos, establecerPedidos] = useState(obtenerPedidosIniciales);
   const [pedidoArrastrado, establecerPedidoArrastrado] = useState(null);
+  const [error, establecerError] = useState("");
+  const [ocupado, establecerOcupado] = useState(true);
+  const operacionEnCurso = useRef(false);
 
-  function agregarPedido() {
-    const nuevoPedido = crearPedido();
+  useEffect(() => {
+    let activo = true;
 
-    establecerPedidos((pedidosActuales) => ({
-      ...pedidosActuales,
-      recibidos: [...pedidosActuales.recibidos, nuevoPedido],
-    }));
+    obtenerPedidos()
+      .then((datos) => {
+        if (activo) establecerPedidos(datos);
+      })
+      .catch((errorCarga) => {
+        if (activo) establecerError(errorCarga.message);
+      })
+      .finally(() => {
+        if (activo) establecerOcupado(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  async function agregarPedido() {
+    if (ocupado || operacionEnCurso.current) return;
+
+    const customer = window.prompt("Nombre del cliente:");
+    if (customer === null) return;
+
+    const items = [];
+    do {
+      const name = window.prompt("Nombre del producto:");
+      if (name === null) return;
+
+      const quantity = window.prompt("Cantidad:", "1");
+      if (quantity === null) return;
+
+      items.push({ name, quantity: Number(quantity) });
+    } while (window.confirm("¿Agregar otro producto al pedido?"));
+
+    operacionEnCurso.current = true;
+    establecerOcupado(true);
+    establecerError("");
+
+    try {
+      const nuevoPedido = await crearPedido(customer, items);
+      establecerPedidos((actuales) => ({
+        ...actuales,
+        recibidos: [...actuales.recibidos, nuevoPedido],
+      }));
+    } catch (errorCreacion) {
+      establecerError(errorCreacion.message);
+    } finally {
+      operacionEnCurso.current = false;
+      establecerOcupado(false);
+    }
   }
 
   function buscarPedido(id) {
@@ -46,33 +95,50 @@ function App() {
     establecerPedidoArrastrado(buscarPedido(operation.source.id));
   }
 
-  function terminarArrastre({ operation, canceled }) {
+  async function terminarArrastre({ operation, canceled }) {
+    const destino = operation.target?.id;
+
     if (
       canceled ||
+      ocupado ||
+      operacionEnCurso.current ||
       !pedidoArrastrado ||
-      !operation.target ||
-      pedidoArrastrado.columnaActual === operation.target.id
+      !destino ||
+      pedidoArrastrado.columnaActual === destino
     ) {
       establecerPedidoArrastrado(null);
       return;
     }
 
-    const pedidoActualizado = cambiarEstadoPedido(
-      pedidoArrastrado.pedido,
-      operation.target.id,
-    );
-
-    establecerPedidos((pedidosActuales) => ({
-      ...pedidosActuales,
-      [pedidoArrastrado.columnaActual]: pedidosActuales[
-        pedidoArrastrado.columnaActual
-      ].filter((pedido) => pedido.id !== pedidoArrastrado.pedido.id),
-      [operation.target.id]: [
-        ...pedidosActuales[operation.target.id],
-        pedidoActualizado,
-      ],
-    }));
+    const { pedido, columnaActual } = pedidoArrastrado;
     establecerPedidoArrastrado(null);
+    operacionEnCurso.current = true;
+    establecerOcupado(true);
+    establecerError("");
+
+    try {
+      const actualizado = await cambiarEstadoPedido(pedido, destino);
+
+      establecerPedidos((actuales) => ({
+        ...actuales,
+        [columnaActual]: actuales[columnaActual].filter(
+          (pedidoActual) => pedidoActual.id !== pedido.id,
+        ),
+        [destino]: [...actuales[destino], actualizado],
+      }));
+    } catch (errorCambio) {
+      establecerError(errorCambio.message);
+
+      // Si el servidor cambió mientras se arrastraba, volvemos a cargar el estado real.
+      try {
+        establecerPedidos(await obtenerPedidos());
+      } catch {
+        // Conservamos el tablero actual y el error original.
+      }
+    } finally {
+      operacionEnCurso.current = false;
+      establecerOcupado(false);
+    }
   }
 
   return (
@@ -85,11 +151,18 @@ function App() {
           <div>
             <h1>coffee.dev</h1>
           </div>
-          <button className="boton-nuevo" type="button" onClick={agregarPedido}>
+          <button
+            className="boton-nuevo"
+            type="button"
+            onClick={agregarPedido}
+            disabled={ocupado}
+          >
             <span aria-hidden="true">+</span>
             Nuevo pedido
           </button>
         </header>
+
+        {error && <p role="alert">{error}</p>}
 
         <section className="tablero" aria-label="Cola de pedidos de café">
           {columnas.map((columna) => (
