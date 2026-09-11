@@ -1,0 +1,317 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap");
+
+:root {
+  color: #ffffff;
+  background: #333333;
+  /* background: #edc4b3;
+  background: linear-gradient(
+    146deg,
+    rgba(237, 196, 179, 1) 0%,
+    rgba(230, 184, 162, 1) 50%,
+    rgba(222, 171, 144, 1) 100%
+  ); */
+  font-family: "DM Sans", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 50px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #cccccc;
+  border-radius: 40px;
+  border: 1px solid #f1f1f1;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #aaaaaa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  isolation: isolate;
+  position: relative;
+}
+
+body::before {
+  background-image: url("https://www.krion.com/uploads/tmp/paredes_de_cafeteria_selva.jpg");
+  background-position: center;
+  background-size: cover;
+  content: "";
+  filter: blur(12px) brightness(0.8);
+  inset: -12px;
+  position: fixed;
+  z-index: -1;
+}
+
+button {
+  font: inherit;
+}
+
+.aplicacion {
+  margin: 0 auto;
+  max-width: 1440px;
+  min-height: 100vh;
+  padding: 56px 7vw 72px;
+}
+
+.encabezado {
+  position: relative;
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding-bottom: 16px;
+}
+
+.etiqueta {
+  color: #aa633d;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  color: #ffffff;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.7rem, 5vw, 4.6rem);
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  margin-bottom: 15px;
+}
+
+.descripcion {
+  color: #766d66;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.boton-nuevo {
+  position: absolute;
+  right: 0px;
+  align-items: center;
+  background: #33333350;
+  backdrop-filter: blur(32px);
+  border: 1px solid #ffffff50;
+  border-radius: 32px;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.9rem;
+  font-weight: 700;
+  gap: 10px;
+  padding: 8px 16px;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.boton-nuevo:hover {
+  background: #333333;
+}
+
+.boton-nuevo:focus-visible {
+  outline: 3px solid #d99b78;
+  outline-offset: 3px;
+}
+
+.boton-nuevo span {
+  font-size: 1.3rem;
+  font-weight: 400;
+  line-height: 0.8;
+}
+
+.tablero {
+  background: #33333320;
+  border: 1px solid #ffffff20;
+  backdrop-filter: blur(32px);
+  padding: 8px;
+  border-radius: 32px;
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tablero > :first-child {
+  border-radius: 24px 8px 8px 24px;
+}
+
+.tablero > :last-child {
+  border-radius: 8px 24px 24px 8px;
+}
+
+.columna {
+  background: #33333350;
+  border: 1px solid #ffffff50;
+  backdrop-filter: blur(32px);
+  border-radius: 8px;
+  min-height: 410px;
+  padding: 16px;
+  height: 100%;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.encabezado-columna,
+.titulo-columna {
+  align-items: center;
+  display: flex;
+  width: 100%;
+}
+
+.encabezado-columna {
+  justify-content: center;
+  margin: 0 3px 18px;
+  width: 100%;
+}
+
+.titulo-columna {
+  gap: 9px;
+}
+
+.titulo-columna h2 {
+  color: #ffffff;
+  font-size: 1rem;
+  /* letter-spacing: 0.1em; */
+  margin-bottom: 0;
+  text-transform: uppercase;
+}
+
+.punto-estado {
+  background: #ffffff;
+  border-radius: 50%;
+  height: 8px;
+  width: 8px;
+}
+
+.columna-azul .unto-estado {
+  background: #7196a7;
+}
+
+.columna-verde .punto-estado {
+  background: #79a681;
+}
+
+.contador {
+  align-items: center;
+  background: #ffffff;
+  border-radius: 20px;
+  color: #756960;
+  display: flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  height: 24px;
+  justify-content: center;
+  min-width: 24px;
+  padding: 0 7px;
+}
+
+.lista-pedidos {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  max-height: 50vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tarjeta-pedido {
+  align-items: center;
+  background: #33333350;
+  backdrop-filter: blur(32px);
+  border: 1px solid #ffffff50;
+  border-radius: 8px;
+  /* box-shadow: 0 4px 14px rgb(70 54 42 / 5%); */
+  cursor: grab;
+  display: grid;
+  gap: 11px;
+  grid-template-columns: auto 1fr auto;
+  padding: 14px;
+  transition: all 160ms ease;
+}
+
+.tarjeta-pedido:active {
+  cursor: grabbing;
+}
+
+.tarjeta-pedido:hover {
+  border-color: #ffffff80;
+  background-color: #33333380;
+}
+
+.linea {
+  height: 1px;
+  width: 100%;
+  background-color: #ffffff50;
+}
+
+.icono-cafe {
+  align-items: center;
+  background: #ffffff;
+  border-radius: 10px;
+  display: flex;
+  font-size: 1.25rem;
+  height: 39px;
+  justify-content: center;
+  width: 39px;
+  padding: 8px;
+}
+
+.informacion-pedido h3 {
+  color: #ffffff;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.informacion-pedido p,
+.tarjeta-pedido time {
+  color: #cccccc;
+  font-size: 0.72rem;
+  margin-bottom: 0;
+}
+
+.tarjeta-pedido time {
+  align-self: start;
+  padding-top: 3px;
+}
+
+.lista-vacia {
+  border: 1px dashed #cccccc;
+  border-radius: 8px;
+  color: #cccccc;
+  font-size: 0.8rem;
+  margin: 0;
+  padding: 24px 10px;
+  text-align: center;
+}
