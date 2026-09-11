@@ -180,7 +180,19 @@ h1 {
   height: 100%;
   transition:
     background 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    filter 300ms ease,
+    opacity 300ms ease;
+}
+
+.columna-origen-arrastre {
+  filter: blur(1px) brightness(0.8);
+  opacity: 1;
+}
+
+.columna-destino-arrastre {
+  border-color: #cccccc;
+  /* box-shadow: 0 0 0 3px #ffffff30; */
 }
 
 .encabezado-columna,
@@ -259,6 +271,42 @@ h1 {
   grid-template-columns: auto 1fr auto;
   padding: 14px;
   transition: all 160ms ease;
+}
+
+.tarjeta-pedido-origen {
+  opacity: 0.5;
+}
+
+.tarjeta-pedido-overlay {
+  animation: tarjeta-arrastre 1000ms ease-out both alternate infinite;
+  box-shadow: 0 18px 42px #00000050;
+  cursor: grabbing;
+  pointer-events: none;
+  position: relative;
+  transform: scale(1) rotate(0deg);
+  z-index: 2;
+}
+
+@keyframes tarjeta-arrastre {
+  from {
+    opacity: 1;
+    transform: scale(1.06) rotate(0deg);
+  }
+
+  30% {
+    opacity: 1;
+    transform: scale(1.06) rotate(1deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.06) rotate(-1deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.06) rotate(0deg);
+  }
 }
 
 .tarjeta-pedido:active {
