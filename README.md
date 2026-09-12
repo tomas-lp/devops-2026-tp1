@@ -1,7 +1,15 @@
 # CoffeeQueue
 
+[![CI/CD Pipeline](https://github.com/tomas-lp/devops-2026-tp1/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/tomas-lp/devops-2026-tp1/actions/workflows/ci-cd.yml)
+
 Gestión simple de pedidos de cafetería: **Frontend React → API REST Express → Redis**.
 No incluye usuarios, login, pagos, stock ni administración de productos.
+
+## Despliegue en la Nube
+
+- **Frontend**: [https://coffeequeue-front-latest.onrender.com](https://coffeequeue-front-latest.onrender.com)
+- **API REST**: [https://coffeequeue-api-latest.onrender.com](https://coffeequeue-api-latest.onrender.com)
+
 
 ## Organización
 
@@ -163,3 +171,4 @@ Se niegan a usar una base con datos y limpian sus claves al terminar; no ejecuta
 
 Referencias técnicas: [transacciones con node-redis](https://redis.io/docs/latest/develop/clients/nodejs/transpipe/)
 y [manejo de errores de Express 5](https://expressjs.com/en/guide/error-handling/).
+
