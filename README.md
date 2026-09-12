@@ -1,6 +1,7 @@
 # CoffeeQueue
 
 [![CI/CD Pipeline](https://github.com/tomas-lp/devops-2026-tp1/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/tomas-lp/devops-2026-tp1/actions/workflows/ci-cd.yml)
+[![CodeQL SAST Security Analysis](https://github.com/tomas-lp/devops-2026-tp1/actions/workflows/codeql.yml/badge.svg)](https://github.com/tomas-lp/devops-2026-tp1/actions/workflows/codeql.yml)
 
 Gestión simple de pedidos de cafetería: **Frontend React → API REST Express → Redis**.
 No incluye usuarios, login, pagos, stock ni administración de productos.
