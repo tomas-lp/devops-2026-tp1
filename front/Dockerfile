@@ -1,4 +1,4 @@
-﻿# Etapa 1: Build de los archivos estáticos de React con Vite
+# Etapa 1: Build de los archivos estáticos de React con Vite
 FROM node:22-alpine AS builder
 WORKDIR /app
 
@@ -19,6 +19,9 @@ RUN rm -rf ./*
 
 # Copiar el build compilado desde la etapa anterior
 COPY --from=builder /app/dist .
+
+# Copiar la configuración de Nginx con el Reverse Proxy a la API
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Puerto HTTP estándar
 EXPOSE 80
