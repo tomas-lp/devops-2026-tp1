@@ -79,6 +79,9 @@ button {
   max-width: 1440px;
   min-height: 100vh;
   padding: 56px 7vw 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .encabezado {
@@ -87,7 +90,6 @@ button {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  padding-bottom: 16px;
 }
 
 .etiqueta {
@@ -598,4 +600,19 @@ h1 {
 .boton-cerrar:focus-visible {
   border-color: #ffffff;
   outline: none;
+}
+
+.card-error {
+  background: #33333320;
+  border: 1px solid #ffffff20;
+  backdrop-filter: blur(32px);
+  padding: 16px 8px;
+  border-radius: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-error > p {
+  margin: 0;
 }

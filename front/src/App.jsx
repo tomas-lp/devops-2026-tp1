@@ -169,8 +169,6 @@ function App() {
           />
         )}
 
-        {error && <p role="alert">{error}</p>}
-
         <section className="tablero" aria-label="Cola de pedidos de café">
           {columnas.map((columna) => (
             <Columna
@@ -183,6 +181,11 @@ function App() {
             />
           ))}
         </section>
+        {error && (
+          <div className="card-error">
+            <p role="alert">{error}</p>
+          </div>
+        )}
       </main>
 
       <DragOverlay dropAnimation={{ duration: 180, easing: "ease-out" }}>
