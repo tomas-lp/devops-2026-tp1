@@ -1,0 +1,53 @@
+services:
+  # ── NGINX REVERSE PROXY ──────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - front
+      - api
+    networks:
+      - coffeequeue
+
+  # ── FRONTEND (React + Vite → nginx estático) ─────────────────────
+  front:
+    build: ./front
+    expose:
+      - "80"
+    networks:
+      - coffeequeue
+
+  # ── API REST (Express 5 + Redis client) ──────────────────────────
+  api:
+    build: ./api
+    expose:
+      - "3000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - PORT=3000
+    depends_on:
+      - redis
+    networks:
+      - coffeequeue
+
+  # ── REDIS ────────────────────────────────────────────────────────
+  redis:
+    image: redis:alpine
+    command: redis-server --protected-mode no
+    expose:
+      - "6379"
+    networks:
+      - coffeequeue
+    volumes:
+      - redis-data:/data
+
+networks:
+  coffeequeue:
+
+volumes:
+  redis-data:

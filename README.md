@@ -14,9 +14,13 @@ No incluye usuarios, login, pagos, stock ni administración de productos.
 ## Organización
 
 ```text
+docker-compose.yml       Stack completo: nginx, front, api, redis
+nginx/
+  nginx.conf             Reverse proxy: / → front, /api/ → api
 front/                    React 19 + Vite; tablero existente
   src/App.jsx             Interacción, carga y mensajes de error
   src/data.js             fetch y adaptación de pedidos para las tarjetas
+  Dockerfile              Multi-stage: build Vite + nginx estático
 api/
   src/config/redis.js      Conexión mediante variables de entorno
   src/routes/             Endpoints
@@ -73,10 +77,8 @@ Docker, configurar esa variable con el nombre del servicio API, por ejemplo
 `http://api:3000`. No usar `redis` como destino HTTP.
 
 `VITE_API_BASE_URL=/api` se incorpora al compilar el frontend. La configuración
-prevista utiliza el mismo origen, por lo que no requiere CORS. Al servir `dist/`
-en producción, la infraestructura debe redirigir `/api` hacia la API mediante su
-proxy HTTP; el proxy de desarrollo de Vite no forma parte de los archivos estáticos.
-No se agregó esa infraestructura ni Docker Compose.
+prevista utiliza el mismo origen, por lo que no requiere CORS. En producción,
+Nginx reverse proxy (`nginx/nginx.conf`) enruta `/` al frontend y `/api/` a la API.
 
 ## Contrato REST
 
@@ -150,6 +152,62 @@ docker run --rm --name coffeequeue-api --network <red-existente> -p 3000:3000 -e
 
 La imagen instala sólo dependencias de producción y corre con el usuario `node`.
 El contenedor recibe variables por `-e` o `--env-file`; no copia archivos `.env`.
+
+## Docker Compose (stack completo)
+
+Levantar el stack completo con reverse proxy y réplicas:
+
+```bash
+docker compose up --build --scale front=3 --scale api=3
+```
+
+Verificar réplicas:
+
+```bash
+docker compose ps
+```
+
+Detener y limpiar:
+
+```bash
+docker compose down
+```
+
+La arquitectura queda:
+
+```
+              NGINX (:80)
+                 │
+        ┌────────┴────────┐
+        ▼                 ▼
+   Front (×3)         API (×3)
+   :80                :3000
+                         │
+                    Redis (:6379)
+```
+
+- Solo Nginx expone el puerto 80 al host
+- Front, API y Redis son internos a la red Docker
+- Redis no es accesible desde fuera
+
+## Demo: Tolerancia a fallos
+
+```bash
+# Ver 3 réplicas corriendo
+docker compose ps
+
+# Matar una réplica de la API
+docker stop devops-api-1
+
+# Verificar que el sistema sigue funcionando
+curl http://localhost/api/orders
+
+# Revivir la réplica
+docker start devops-api-1
+
+# Verificar que volvieron a ser 3
+docker compose ps
+```
 
 ## Verificación
 
