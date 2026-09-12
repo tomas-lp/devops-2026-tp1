@@ -1,0 +1,141 @@
+﻿name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_API: ghcr.io/${{ github.repository }}/coffeequeue-api
+  IMAGE_FRONT: ghcr.io/${{ github.repository }}/coffeequeue-front
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Test y validación de código
+  # -------------------------------------------------------------
+  test:
+    name: Run Tests and Lint
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test API (Unit & Integration)
+        run: |
+          cd api
+          npm ci
+          npm test
+          REDIS_HOST=127.0.0.1 TEST_REDIS_DB=15 npm run test:integration
+
+      - name: Lint and Build Frontend
+        run: |
+          cd front
+          npm ci
+          npm run lint
+          npm run build
+
+  # -------------------------------------------------------------
+  # Job 2: Build y Push de imágenes a GitHub Container Registry (GHCR)
+  # -------------------------------------------------------------
+  build-and-push:
+    name: Build and Push Docker Images
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build y Push de API
+      - name: Extract metadata for API
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_API }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+
+      # Build y Push de Frontend
+      - name: Extract metadata for Frontend
+        id: meta-front
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_FRONT }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./front
+          push: true
+          tags: ${{ steps.meta-front.outputs.tags }}
+          labels: ${{ steps.meta-front.outputs.labels }}
+
+  # -------------------------------------------------------------
+  # Job 3: Trigger Deploy en Cloud (Render)
+  # -------------------------------------------------------------
+  deploy:
+    name: Trigger Cloud Deployment
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deploy Hook (API)
+        if: env.RENDER_API_HOOK != ''
+        env:
+          RENDER_API_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK }}
+        run: |
+          curl -X POST "$RENDER_API_HOOK"
+
+      - name: Trigger Render Deploy Hook (Frontend)
+        if: env.RENDER_FRONT_HOOK != ''
+        env:
+          RENDER_FRONT_HOOK: ${{ secrets.RENDER_FRONT_DEPLOY_HOOK }}
+        run: |
+          curl -X POST "$RENDER_FRONT_HOOK"
