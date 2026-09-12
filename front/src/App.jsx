@@ -25,6 +25,7 @@ function App() {
   const [pedidoArrastrado, establecerPedidoArrastrado] = useState(null);
   const [error, establecerError] = useState("");
   const [ocupado, establecerOcupado] = useState(true);
+  const [mostrarFormulario, establecerMostrarFormulario] = useState(false);
   const operacionEnCurso = useRef(false);
 
   useEffect(() => {
@@ -46,33 +47,31 @@ function App() {
     };
   }, []);
 
-  async function agregarPedido() {
+  function abrirFormulario() {
     if (ocupado || operacionEnCurso.current) return;
+    establecerError("");
+    establecerMostrarFormulario(true);
+  }
 
-    const customer = window.prompt("Nombre del cliente:");
-    if (customer === null) return;
+  function cerrarFormulario() {
+    if (operacionEnCurso.current) return;
+    establecerMostrarFormulario(false);
+  }
 
-    const items = [];
-    do {
-      const name = window.prompt("Nombre del producto:");
-      if (name === null) return;
-
-      const quantity = window.prompt("Cantidad:", "1");
-      if (quantity === null) return;
-
-      items.push({ name, quantity: Number(quantity) });
-    } while (window.confirm("¿Agregar otro producto al pedido?"));
+  async function guardarPedido(cliente, productos) {
+    if (ocupado || operacionEnCurso.current) return;
 
     operacionEnCurso.current = true;
     establecerOcupado(true);
     establecerError("");
 
     try {
-      const nuevoPedido = await crearPedido(customer, items);
+      const nuevoPedido = await crearPedido(cliente, productos);
       establecerPedidos((actuales) => ({
         ...actuales,
         recibidos: [...actuales.recibidos, nuevoPedido],
       }));
+      establecerMostrarFormulario(false);
     } catch (errorCreacion) {
       establecerError(errorCreacion.message);
     } finally {
@@ -154,13 +153,21 @@ function App() {
           <button
             className="boton-nuevo"
             type="button"
-            onClick={agregarPedido}
+            onClick={abrirFormulario}
             disabled={ocupado}
           >
             <span aria-hidden="true">+</span>
             Nuevo pedido
           </button>
         </header>
+
+        {mostrarFormulario && (
+          <FormularioPedido
+            enCurso={ocupado}
+            onCancelar={cerrarFormulario}
+            onGuardar={guardarPedido}
+          />
+        )}
 
         {error && <p role="alert">{error}</p>}
 
@@ -184,6 +191,190 @@ function App() {
         )}
       </DragOverlay>
     </DragDropProvider>
+  );
+}
+
+function FormularioPedido({ enCurso, onCancelar, onGuardar }) {
+  const [cliente, establecerCliente] = useState("");
+  const [productos, establecerProductos] = useState([
+    { nombre: "", cantidad: 1 },
+  ]);
+  const [errorLocal, establecerErrorLocal] = useState("");
+
+  useEffect(() => {
+    function manejarTecla(evento) {
+      if (evento.key === "Escape") onCancelar();
+    }
+
+    window.addEventListener("keydown", manejarTecla);
+    return () => window.removeEventListener("keydown", manejarTecla);
+  }, [onCancelar]);
+
+  function actualizarProducto(indice, campo, valor) {
+    establecerProductos((actuales) =>
+      actuales.map((producto, posicion) =>
+        posicion === indice ? { ...producto, [campo]: valor } : producto,
+      ),
+    );
+  }
+
+  function agregarProducto() {
+    establecerProductos((actuales) => [
+      ...actuales,
+      { nombre: "", cantidad: 1 },
+    ]);
+  }
+
+  function quitarProducto(indice) {
+    establecerProductos((actuales) =>
+      actuales.length <= 1
+        ? actuales
+        : actuales.filter((_, posicion) => posicion !== indice),
+    );
+  }
+
+  async function manejarEnvio(evento) {
+    evento.preventDefault();
+    const clienteLimpio = cliente.trim();
+    const items = productos
+      .map((producto) => ({
+        name: producto.nombre.trim(),
+        quantity: Number(producto.cantidad),
+      }))
+      .filter((item) => item.name !== "");
+
+    if (!clienteLimpio) {
+      establecerErrorLocal("Ingresá el nombre del cliente.");
+      return;
+    }
+
+    if (items.length === 0) {
+      establecerErrorLocal("Agregá al menos un producto con nombre.");
+      return;
+    }
+
+    if (
+      items.some((item) => !Number.isFinite(item.quantity) || item.quantity < 1)
+    ) {
+      establecerErrorLocal("La cantidad debe ser un número mayor o igual a 1.");
+      return;
+    }
+
+    establecerErrorLocal("");
+    await onGuardar(clienteLimpio, items);
+  }
+
+  return (
+    <div className="fondo-popup" onClick={onCancelar}>
+      <div
+        className="popup"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Nuevo pedido"
+        onClick={(evento) => evento.stopPropagation()}
+      >
+        <div className="encabezado-popup">
+          <div className="titulo-popup">
+            <div className="linea" />
+            <h2>Nuevo pedido</h2>
+            <div className="linea" />
+          </div>
+        </div>
+
+        <form className="formulario-pedido" onSubmit={manejarEnvio}>
+          <label className="campo">
+            <span>Cliente</span>
+            <input
+              autoFocus
+              disabled={enCurso}
+              name="cliente"
+              onChange={(evento) => establecerCliente(evento.target.value)}
+              placeholder="Nombre del cliente"
+              type="text"
+              value={cliente}
+            />
+          </label>
+
+          <div className="productos-encabezado">
+            <span>Productos</span>
+            <button
+              className="boton-secundario"
+              type="button"
+              onClick={agregarProducto}
+              disabled={enCurso}
+            >
+              <span aria-hidden="true">+</span>
+              Agregar
+            </button>
+          </div>
+
+          <div className="lista-productos">
+            {productos.map((producto, indice) => (
+              <div className="fila-producto" key={indice}>
+                <label className="campo campo-producto">
+                  <span className="solo-lectores">Producto {indice + 1}</span>
+                  <input
+                    disabled={enCurso}
+                    onChange={(evento) =>
+                      actualizarProducto(indice, "nombre", evento.target.value)
+                    }
+                    placeholder={`Producto ${indice + 1}`}
+                    type="text"
+                    value={producto.nombre}
+                  />
+                </label>
+                <label className="campo campo-cantidad">
+                  <span className="solo-lectores">Cantidad</span>
+                  <input
+                    disabled={enCurso}
+                    min="1"
+                    onChange={(evento) =>
+                      actualizarProducto(
+                        indice,
+                        "cantidad",
+                        evento.target.value,
+                      )
+                    }
+                    step="1"
+                    type="number"
+                    value={producto.cantidad}
+                  />
+                </label>
+                <button
+                  className="boton-quitar"
+                  type="button"
+                  onClick={() => quitarProducto(indice)}
+                  disabled={enCurso || productos.length <= 1}
+                  aria-label={`Quitar producto ${indice + 1}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {errorLocal && (
+            <p className="error-formulario" role="alert">
+              {errorLocal}
+            </p>
+          )}
+
+          <div className="acciones-popup">
+            <button
+              className="boton-secundario"
+              type="button"
+              onClick={onCancelar}
+              disabled={enCurso}
+            >
+              Cancelar
+            </button>
+            <button className="boton-primario" type="submit" disabled={enCurso}>
+              Crear pedido
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
