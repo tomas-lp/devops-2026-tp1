@@ -1,8 +1,8 @@
-﻿name: CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/nginx-cloud-proxy" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -11,6 +11,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_API: ghcr.io/${{ github.repository }}/coffeequeue-api
   IMAGE_FRONT: ghcr.io/${{ github.repository }}/coffeequeue-front
+  IMAGE_NGINX: ghcr.io/${{ github.repository }}/coffeequeue-nginx
 
 jobs:
   # -------------------------------------------------------------
@@ -60,7 +61,6 @@ jobs:
   build-and-push:
     name: Build and Push Docker Images
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -115,6 +115,24 @@ jobs:
           push: true
           tags: ${{ steps.meta-front.outputs.tags }}
           labels: ${{ steps.meta-front.outputs.labels }}
+
+      # Build y Push de NGINX Reverse Proxy
+      - name: Extract metadata for NGINX
+        id: meta-nginx
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NGINX }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build and push NGINX image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          push: true
+          tags: ${{ steps.meta-nginx.outputs.tags }}
+          labels: ${{ steps.meta-nginx.outputs.labels }}
 
   # -------------------------------------------------------------
   # Job 3: Trigger Deploy en Cloud (Render)
