@@ -8,6 +8,7 @@ No incluye usuarios, login, pagos, stock ni administración de productos.
 
 ## Despliegue en la Nube
 
+- **Aplicación (Nginx Gateway / Reverse Proxy)**: [https://coffeequeue-nginx-latest.onrender.com](https://coffeequeue-nginx-latest.onrender.com)
 - **Frontend**: [https://coffeequeue-front-latest.onrender.com](https://coffeequeue-front-latest.onrender.com)
 - **API REST**: [https://coffeequeue-api-latest.onrender.com](https://coffeequeue-api-latest.onrender.com)
 
@@ -15,12 +16,18 @@ No incluye usuarios, login, pagos, stock ni administración de productos.
 ## Organización
 
 ```text
-docker-compose.yml       Stack completo: nginx, front, api, redis
+.github/workflows/
+  ci-cd.yml              CI/CD: tests, build/push a GHCR y deploy automático
+  codeql.yml             SAST: análisis estático de seguridad con CodeQL
+docker-compose.yml       Stack completo local: nginx, front, api, redis
 nginx/
-  nginx.conf             Reverse proxy: / → front, /api/ → api
+  nginx.conf             Reverse proxy local (Docker Compose)
+  nginx.cloud.conf       Reverse proxy en la nube (Render)
+  Dockerfile             Imagen para el servicio Nginx en la nube
 front/                    React 19 + Vite; tablero existente
   src/App.jsx             Interacción, carga y mensajes de error
   src/data.js             fetch y adaptación de pedidos para las tarjetas
+  nginx.conf             Servidor Nginx para archivos estáticos de React
   Dockerfile              Multi-stage: build Vite + nginx estático
 api/
   src/config/redis.js      Conexión mediante variables de entorno

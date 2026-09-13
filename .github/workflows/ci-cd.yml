@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "feature/nginx-cloud-proxy" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -140,7 +140,7 @@ jobs:
   deploy:
     name: Trigger Cloud Deployment
     needs: build-and-push
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -157,3 +157,10 @@ jobs:
           RENDER_FRONT_HOOK: ${{ secrets.RENDER_FRONT_DEPLOY_HOOK }}
         run: |
           curl -X POST "$RENDER_FRONT_HOOK"
+
+      - name: Trigger Render Deploy Hook (NGINX)
+        if: env.RENDER_NGINX_HOOK != ''
+        env:
+          RENDER_NGINX_HOOK: ${{ secrets.RENDER_NGINX_DEPLOY_HOOK }}
+        run: |
+          curl -X POST "$RENDER_NGINX_HOOK"
