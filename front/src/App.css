@@ -92,6 +92,33 @@ button {
   justify-content: center;
 }
 
+.badge {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-replica {
+  display: flex;
+  align-items: center;
+  background: #33333380;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  user-select: none;
+  margin-bottom: 8px;
+}
+
 .etiqueta {
   color: #aa633d;
   font-size: 0.74rem;

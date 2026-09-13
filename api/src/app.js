@@ -1,11 +1,22 @@
 import express from 'express';
+import os from 'node:os';
 import { ordersRoutes } from './routes/orders.routes.js';
 import { createOrdersService } from './services/orders.service.js';
+
+const apiReplicaNumero = Math.floor(100 + Math.random() * 900);
 
 export function createApp(redis) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '100kb' }));
+  app.get('/api/replica', (req, res) => {
+    res.json({
+      data: {
+        numero: apiReplicaNumero,
+        hostname: os.hostname(),
+      },
+    });
+  });
   app.use('/api/orders', ordersRoutes(createOrdersService(redis)));
   app.use((req, res) => res.status(404).json({ error: { message: 'Ruta inexistente.' } }));
   // Express 5 deriva automáticamente los rechazos de handlers async a este middleware.

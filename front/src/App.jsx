@@ -11,6 +11,7 @@ import {
   crearPedido,
   obtenerPedidosIniciales,
   obtenerPedidos,
+  obtenerReplicaApi,
 } from "./data";
 import coffeeIcon from "./assets/coffee.svg";
 
@@ -20,12 +21,25 @@ const columnas = [
   { clave: "listos", titulo: "Listos", color: "verde" },
 ];
 
+function obtenerReplicaInfo() {
+  const raw = typeof window !== "undefined" ? window.REPLICA_ID : null;
+  if (!raw || raw === "__SERVER_REPLICA_ID__") {
+    return null;
+  }
+  const hash = raw
+    .split("")
+    .reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 0);
+  const numero = (hash % 900) + 100;
+  return { raw, numero };
+}
+
 function App() {
   const [pedidos, establecerPedidos] = useState(obtenerPedidosIniciales);
   const [pedidoArrastrado, establecerPedidoArrastrado] = useState(null);
   const [error, establecerError] = useState("");
   const [ocupado, establecerOcupado] = useState(true);
   const [mostrarFormulario, establecerMostrarFormulario] = useState(false);
+  const [replicaApiInfo, establecerReplicaApiInfo] = useState(null);
   const operacionEnCurso = useRef(false);
 
   useEffect(() => {
@@ -41,6 +55,12 @@ function App() {
       .finally(() => {
         if (activo) establecerOcupado(false);
       });
+
+    obtenerReplicaApi()
+      .then((datos) => {
+        if (activo) establecerReplicaApiInfo(datos);
+      })
+      .catch((err) => console.error("Error al obtener réplica de API:", err));
 
     return () => {
       activo = false;
@@ -140,6 +160,8 @@ function App() {
     }
   }
 
+  const replicaInfo = obtenerReplicaInfo();
+
   return (
     <DragDropProvider
       onDragStart={iniciarArrastre}
@@ -147,7 +169,7 @@ function App() {
     >
       <main className="aplicacion">
         <header className="encabezado">
-          <div>
+          <div className="encabezado-titulo">
             <h1>coffee.dev</h1>
           </div>
           <button
@@ -187,6 +209,21 @@ function App() {
           </div>
         )}
       </main>
+
+      <div className="badge">
+        <span
+          className="badge-replica"
+          title={replicaInfo ? `Host: ${replicaInfo.raw}` : undefined}
+        >
+          Front: {replicaInfo ? `#${replicaInfo.numero}` : "###"}
+        </span>
+        <span
+          className="badge-replica"
+          title={replicaApiInfo ? `Host: ${replicaApiInfo.hostname}` : undefined}
+        >
+          API: {replicaApiInfo ? `#${replicaApiInfo.numero}` : "###"}
+        </span>
+      </div>
 
       <DragOverlay dropAnimation={{ duration: 180, easing: "ease-out" }}>
         {pedidoArrastrado && (

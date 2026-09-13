@@ -23,3 +23,17 @@ test('errores HTTP consistentes incluso si Redis falla', async (t) => {
     assert.deepEqual(await response.json(), { error: { message } });
   }
 });
+
+test('endpoint /api/replica devuelve numero y hostname de la replica', async (t) => {
+  const server = createApp({}).listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  const base = `http://127.0.0.1:${server.address().port}`;
+
+  const response = await fetch(`${base}/api/replica`);
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.ok(typeof body.data.numero === 'number');
+  assert.ok(body.data.numero >= 100 && body.data.numero <= 999);
+  assert.ok(typeof body.data.hostname === 'string' && body.data.hostname.length > 0);
+});
